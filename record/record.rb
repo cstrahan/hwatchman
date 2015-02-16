@@ -6,6 +6,7 @@ require 'pathname'
 require 'fileutils'
 require 'open3'
 require 'json'
+require 'shellwords'
 
 ROOT      = Pathname.new("/watchman-recording")
 DIR       = Pathname.new(File.expand_path("../", __FILE__))
@@ -44,9 +45,13 @@ def bser_encode(obj, buffer="")
   buffer
 end
 
-def watchman(cmd, &block)
+def watchman(cmd, opts={})
   puts ">> watchman --sockname=#{SOCKNAME} #{cmd}"
-  `watchman --sockname=#{SOCKNAME} #{cmd}`
+  pre = ""
+  if opts[:stdin]
+    pre = "echo #{opts[:stdin].shellescape} |"
+  end
+  `#{pre} watchman --sockname=#{SOCKNAME} #{cmd}`
 end
 
 def clock
@@ -78,6 +83,25 @@ data = ""
   end
 end
 
-puts data.inspect
+# Ditto for JSON
+data = ""
+[1, 10, 100, 1000].each do |batch_size|
+  watchman "shutdown-server"
+  Dir.glob(ROOT.join("*")).each do |file|
+    FileUtils.rm(file)
+  end
+  watchman "watch #{ROOT}"
+  sleep 0.25
+  time = clock
+  1.upto(batch_size) do |x|
+    puts "== #{x}/#{batch_size} =="
+    FileUtils.touch(ROOT.join(x.to_s))
+  end
+  sleep 0.05
+  data = watchman "-j", :stdin => ["query", ROOT, ["since", time]].to_json
+  File.open(DIR.join("batch#{batch_size}.json"), "wb") do |f|
+    f.write(data)
+  end
+end
 
 watchman "shutdown-server"

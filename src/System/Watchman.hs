@@ -5,18 +5,20 @@
 module System.Watchman (
       decode
     , sizeOfPdu
+    , Value(..)
     ) where
 
 import           Control.Applicative
+import           Control.DeepSeq
 import           Control.Monad
 import qualified Data.Aeson                 as J
 import           Data.Aeson.Types           (parseMaybe)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Internal   as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
+import qualified Data.HashMap               as M
 import           Data.Int                   (Int16, Int32, Int64, Int8)
 import qualified Data.Int                   as N
-import qualified Data.Map                   as M
 import qualified Data.Vector                as V
 import qualified Data.Vector.Mutable        as MV
 import           Data.Word
@@ -28,15 +30,6 @@ import           System.Directory           (findExecutable)
 import           System.Exit                (ExitCode (..))
 import           System.IO                  (Handle, hGetBuf)
 import           System.Process             (readProcessWithExitCode)
-import           Control.DeepSeq
-
---connect :: String -> IO Socket
---  soc <- socket AF_UNIX Stream defaultProtocol
---  connect soc (SockAddrUnix (vmBaseDir </> n </> "monitor.soc"))
---  send soc (c ++ "\n")
---  sClose soc
---
---
 
 -- Constants
 arrayMarker    = 0x00 :: Word8
@@ -67,7 +60,7 @@ data Value = Array  (V.Vector Value)
            | Int    N.Int      -- TODO: should use Int64, and maybe support others too.
            | Double Double
            | Bool   Bool
-           | Object (M.Map BS.ByteString Value)
+           | Object (M.HashMap BS.ByteString Value)
            | Null
            deriving (Show)
 
@@ -123,7 +116,7 @@ doDecode fptr ptr offset endOffset = do
            | marker == mapMarker      -> decodeMap offset
            | marker == stringMarker   -> decodeString offset
            | marker >= int8Marker &&
-             marker <= int64Marker -> toInt <$> decodeInt offset
+             marker <= int64Marker    -> toInt <$> decodeInt offset
            | marker == floatMarker    -> decodeFloat offset
            | marker == trueVal        -> return (Bool True, offset + int8Size)
            | marker == falseVal       -> return (Bool False, offset + int8Size)

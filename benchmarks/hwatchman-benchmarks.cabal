@@ -12,4 +12,6 @@ executable hwatchman-benchmark-decode
     base,
     bytestring,
     criterion,
-    text
+    text,
+    cereal,
+    aeson

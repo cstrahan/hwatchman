@@ -20,6 +20,9 @@ let
     hspec
     deepseq
     criterion
+    cereal
+    binary
+    hashmap
   ]);
 
 in

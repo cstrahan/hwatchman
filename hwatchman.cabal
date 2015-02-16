@@ -18,11 +18,22 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     System.Watchman
+                     , System.Watchman.Cereal
   -- other-modules:       
   other-extensions:    BangPatterns
-  build-depends:       base >=4.7 && <4.8, bytestring >=0.10 && <0.11, containers >=0.5 && <0.6, vector >=0.10 && <0.11, directory >=1.2 && <1.3, process >=1.2 && <1.3, aeson >=0.8 && <0.9, deepseq >=1.3 && <1.4
+  build-depends:       base >=4.7 && <4.8
+                     , bytestring >=0.10 && <0.11
+                     , containers >=0.5 && <0.6
+                     , vector >=0.10 && <0.11
+                     , directory >=1.2 && <1.3
+                     , process >=1.2 && <1.3
+                     , aeson >=0.8 && <0.9
+                     , deepseq >=1.3 && <1.4
+                     , hashmap >=1.3 && <1.4
+                     , cereal >=0.4 && <0.5
   hs-source-dirs:      src
   default-language:    Haskell2010
+  --ghc-options:         -O2 -Wall
 
 test-suite spec
   type:
@@ -36,4 +47,6 @@ test-suite spec
   build-depends:
       base    == 4.*
     , hwatchman
+    , cereal
+    , bytestring
     , hspec   >=2.0 && <3.0

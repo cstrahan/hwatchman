@@ -1,0 +1,30 @@
+copying bytestrings doesn't seem to hurt too bad.
+
+
+HAND-ROLLED
+
+  time                 3.576 ms   (3.555 ms .. 3.594 ms)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 3.572 ms   (3.559 ms .. 3.592 ms)
+  std dev              48.01 μs   (34.88 μs .. 83.09 μs)
+
+  benchmarking decode/batch10
+  time                 1.520 ms   (1.508 ms .. 1.532 ms)
+                       0.999 R²   (0.999 R² .. 1.000 R²)
+  mean                 1.512 ms   (1.503 ms .. 1.521 ms)
+  std dev              27.30 μs   (23.22 μs .. 36.02 μs)
+
+  benchmarking decode/batch100
+  time                 1.368 ms   (1.362 ms .. 1.374 ms)
+                       1.000 R²   (1.000 R² .. 1.000 R²)
+  mean                 1.391 ms   (1.385 ms .. 1.399 ms)
+  std dev              24.63 μs   (20.86 μs .. 29.86 μs)
+
+  benchmarking decode/batch1000
+  time                 1.427 ms   (1.370 ms .. 1.529 ms)
+                       0.979 R²   (0.954 R² .. 1.000 R²)
+  mean                 1.385 ms   (1.371 ms .. 1.439 ms)
+  std dev              87.12 μs   (13.26 μs .. 183.0 μs)
+  variance introduced by outliers: 48% (moderately inflated)
+
+CEREAL
