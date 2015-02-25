@@ -1,24 +1,44 @@
 {-# LANGUAGE ImpredicativeTypes #-}
 
+import           Control.Applicative
 import           Control.Monad
 import           Criterion.Main
-import qualified Data.Aeson             as J
-import qualified Data.ByteString        as BS
-import qualified Data.ByteString.Lazy   as BL
-import           Data.Serialize.Get
-import           System.Watchman        hiding (decode)
-import           System.Watchman.Cereal
+import qualified Data.ByteString          as BS
+import qualified Data.ByteString.Internal as BS
+import           Data.IORef
+import           Foreign.ForeignPtr
+import           Foreign.Marshal.Utils
+import           Foreign.Ptr
+import           System.IO
+import           System.Watchman
+
+-- NOTES
+-- 
+-- File counts:
+-- 
+--   44,000 – The number of files in the 3.2 kernel version
+--   37,626 – The number of files in Facebook's source tree.
+--
+-- References:
+--   https://code.facebook.com/posts/218678814984400/scaling-mercurial-at-facebook/
+--   http://royal.pingdom.com/2012/04/16/linux-kernel-development-numbers/
 
 -- just to help with inference
 zero :: Int
 zero = 0
 
-decode :: BS.ByteString -> IO Value
-decode str = case go str of
-    Left msg  -> fail msg
-    Right val -> return val
-  where
-    go = runGet getPdu
+-- make a stream reader from a fixture file.
+makeReader :: BS.ByteString -> IO (Ptr a -> Int -> IO Int)
+makeReader str = do
+    posRef <- newIORef 0
+    let (fptr, offset, size) = BS.toForeignPtr str
+    return $ \destPtr len -> do
+        withForeignPtr fptr $ \ptr -> do
+            pos <- readIORef posRef
+            let srcPtr = plusPtr ptr (offset + pos)
+            copyBytes destPtr srcPtr len
+            writeIORef posRef (pos + len)
+            return len
 
 main :: IO ()
 main = do
@@ -28,45 +48,17 @@ main = do
     b1000 <- BS.readFile "../record/batch1000.bin"
 
     defaultMain $ [
-        bgroup "decode bser" [
+        bgroup "decode" [
             bench "batch1" $ nfIO $ do
                 forM [zero..999] $ \_ -> do
-                    decode b1
+                    decode =<< makeReader b1
           , bench "batch10" $ nfIO $ do
                 forM [zero..99] $ \_ -> do
-                    decode b10
+                    decode =<< makeReader b10
           , bench "batch100" $ nfIO $ do
                 forM [zero..9] $ \_ -> do
-                    decode b100
+                    decode =<< makeReader b100
           , bench "batch1000" $ nfIO $ do
-                decode b1000
+                decode =<< makeReader b1000
           ]
       ]
-
---parseJson :: BL.ByteString -> IO J.Value
---parseJson = return . unMaybe . J.decode
---  where
---    unMaybe (Just val) = val
---
---main :: IO ()
---main = do
---    b1    <- BL.readFile "../record/batch1.json"
---    b10   <- BL.readFile "../record/batch10.json"
---    b100  <- BL.readFile "../record/batch100.json"
---    b1000 <- BL.readFile "../record/batch1000.json"
---
---    defaultMain $ [
---        bgroup "decode json" [
---            bench "batch1" $ nfIO $ do
---                forM [zero..999] $ \_ -> do
---                    parseJson b1
---          , bench "batch10" $ nfIO $ do
---                forM [zero..99] $ \_ -> do
---                    parseJson b10
---          , bench "batch100" $ nfIO $ do
---                forM [zero..9] $ \_ -> do
---                    parseJson b100
---          , bench "batch1000" $ nfIO $ do
---                parseJson b1000
---          ]
---      ]

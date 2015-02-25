@@ -6,7 +6,7 @@ cabal-version:       >=1.2
 
 executable hwatchman-benchmark-decode
   main-is: Decode.hs
-  ghc-options: -Wall -O2 -rtsopts
+  ghc-options: -Wall -O2 -rtsopts -fno-full-laziness 
   build-depends:
     hwatchman,
     base,

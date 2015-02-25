@@ -1,29 +1,36 @@
 with (import <nixpkgs> { });
 
 let
-  ghc = haskellngPackages;
+  #ghc = haskellngPackages;
+  ghc = haskell-ng.packages.ghc7101;
+
+  exposePkgs = names: ghcPackages: ghcPackages.overrideDerivation (drv: { postBuild = ''
+    ${drv.postBuild}
+    ${lib.concatMapStringsSep "\n" (name: "$out/bin/ghc-pkg expose ${name}") names}
+  ''; });
+
 
   withHoogle = haskellEnv:
     ghc.callPackage <nixpkgs/pkgs/development/libraries/haskell/hoogle/local.nix> {
       packages = haskellEnv.paths;
     };
 
-  ghcPackages = ghc.ghcWithPackages (p: with p; [
-    ipprint
-    hscolour
+  ghcPackages = exposePkgs [ ] (ghc.ghcWithPackages (p: with p; [
+    #ipprint
+    #hscolour
     #ghc-mod
     #hdevtools
     stylish-haskell
     cabal-install
-    cabal2nix
+    #cabal2nix
     vector
     hspec
     deepseq
-    criterion
+    #criterion
     cereal
     binary
     hashmap
-  ]);
+  ]));
 
 in
 
